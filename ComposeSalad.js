@@ -15,14 +15,19 @@ function ComposeSalad(props) {
 
 
   let mySaladSelect = function (type, stateValue, changeFunction, allOptionsOfType) {
+    let firstDisplayedOption = (<option></option>);
+    if (stateValue) {
+      firstDisplayedOption = (<option selected hidden>{stateValue} {props.inventory[stateValue]['price']} kr</option>);
+    } else {
+      firstDisplayedOption = (<option selected hidden>Välj {type}</option>);
+    }
     return (
       <>
         <select
           required
           onChange={(e) => { changeFunction(e.target.value) }}
-          style={{ width: 'auto' }}
-          defaultValue={'DEFAULT'}>
-          <option value="DEFAULT" selected hidden>Välj {type}</option>
+          style={{ width: 'auto' }}>
+          {firstDisplayedOption}
           {allOptionsOfType.map(choice => <option value={choice} key={choice}>{choice} {props.inventory[choice]['price']} kr</option>)}
         </select>
       </>
@@ -35,6 +40,7 @@ function ComposeSalad(props) {
         {extras.map(name => <label className="col-4">
           <input
             type='checkbox'
+            checked={extra[name]}
             name={name}
             onChange={(e) => {
               setExtra({ ...stateValue, [e.target.name]: [e.target.checked][0] })
@@ -67,33 +73,56 @@ function ComposeSalad(props) {
   }
 
   Salad.prototype.getPrice = function () {
-    return Object.values(this.ingredients).reduce((accPrice, ingredient) => accPrice + ingredient.price, 0);
+    return Object.values(this.ingredients).reduce((accPrice, ingredient) => accPrice + ingredient['price'], 0);
   }
   Salad.prototype.displayIngredients = function () {
     return Object.keys(this.ingredients).reduce((a, b) => a + ", " + b);
   }
 
+  const onSubmit = function (event) {
+    event.preventDefault()
+    if (!foundation || !protein || !dressing) {
+      return;
+    }
 
-const onSubmit = function(event) {
-  event.preventDefault()
-  let mySalad = new Salad();
-  const chosenExtras = Object.keys(extra).filter((x) => x);
-  mySalad
-  .add(foundation, props.inventory[foundation])
-  .add(protein, props.inventory[protein]);
-  chosenExtras.forEach((x) => mySalad.add(x, props.inventory[x]));
-  mySalad.add(dressing, props.inventory[dressing]);
-  
-  console.log(mySalad);
-  console.log(mySalad.getPrice());
+    let mySalad = new Salad();
+    const chosenExtras = Object.keys(extra).filter((x) => x);
 
-  setFoundation("");
-  setProtein("");
-  setExtra({});
-  setDressing("");
-  document.forms.form.reset(); 
-  props.parentCallBack(mySalad);
-}
+    mySalad
+      .add(foundation, props.inventory[foundation])
+      .add(protein, props.inventory[protein]);
+    chosenExtras.forEach((x) => mySalad.add(x, props.inventory[x]));
+    mySalad.add(dressing, props.inventory[dressing]);
+
+    console.log(mySalad);
+
+    resetForm();
+    props.parentCallBack(mySalad);
+  }
+
+  const resetForm = function () {
+    setFoundation("");
+    setProtein("");
+    setExtra({});
+    setDressing("");
+    document.forms.form.reset();
+  }
+
+  const caesarSalladBtn = function () {
+    resetForm();
+    setFoundation("Sallad");
+    setProtein("Kycklingfilé");
+    setExtra({ Bacon: true, Krutonger: true, Körsbärstomater: true, Rödlök: true, Fetaost: true });
+    setDressing("Ceasardressing");
+  }
+
+  const optimalSaladBtn = function () {
+    resetForm();
+    setFoundation('Sallad + Pasta');
+    setProtein("Kycklingfilé");
+    setExtra({ "Soltorkad tomat": true, Sojabönor: true, "Inlagd lök": true, "Krossade jordnötter": true, Parmesan: true });
+    setDressing("Pesto");
+  }
 
   return (
     <div className="continer col-12">
@@ -101,6 +130,10 @@ const onSubmit = function(event) {
         <h2>Välj innehållet i din sallad</h2>
 
         <form id="form" onSubmit={(e) => onSubmit(e)}>
+          <button type="button" className="btn btn-outline-primary" onClick={caesarSalladBtn}>Förvälj Caesarsallad</button>
+          <button type="button" className="btn btn-outline-primary" onClick={optimalSaladBtn}>Förvälj Högst Kundvärde</button>
+          <button type="button" className="btn btn-outline-danger" onClick={resetForm}>Rensa förval</button>
+          <br />
           <div className="mb-3">
             <label htmlFor="foundation" className="form-label">Välj bas: </label>
             <br />
@@ -127,7 +160,6 @@ const onSubmit = function(event) {
 
           <button type="submit" className="btn btn-primary">Lägg till i kundvagnen</button>
         </form>
-
       </div>
     </div>
   );
